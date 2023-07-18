@@ -201,7 +201,7 @@ int main(void)
 	
 	SystickConfig();
 	
-	bsp_gpio_init();
+//	bsp_gpio_init();
 //	OePins_Control_Init();    //OE引脚的初始化，允许串口输出
 	
 	//串口初始化

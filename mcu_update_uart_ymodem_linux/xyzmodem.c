@@ -877,8 +877,8 @@ static int ready_to_update(void)
 			else
 			{
 				printf("md5sum different , readyto update\n");
-				send_update_cmd_tomcu(NULL,1); //ÐèÒªÉý¼¶
-				return 0;
+				return send_update_cmd_tomcu(NULL,1); //正常返回0，其他返回-1
+				//return 0;
 			}	
 		}
 		else
@@ -910,7 +910,7 @@ char* file_read_check(const char *filename,int *filesize)
     int size = 0;
     int bw = 0;       
     int readcount = 0;
-    char filename_md5[64] = {0};
+//    char filename_md5[64] = {0};
     char md5_value[64] = {0};
     int file_offset = 0;
 
@@ -922,6 +922,7 @@ char* file_read_check(const char *filename,int *filesize)
     	return NULL;
     }
 
+#if 0    //不再需要md5文件，从bin文件中读出来，2023-07-05
     strncpy(filename_md5,filename,len-9);    //调整一下后缀
     strcat(filename_md5,".md5");   //形成文件名后缀为md5。
 
@@ -948,7 +949,7 @@ char* file_read_check(const char *filename,int *filesize)
     }
     fclose(fin);
     printf("read md5_file success! md5_value = %s\n",md5_value);
-
+#endif
 	// ret = get_file_md5sum(filename);
 	// if(ret > 0)
 	// {
@@ -986,6 +987,20 @@ char* file_read_check(const char *filename,int *filesize)
     file_offset = ApplicationAddress & 0x7f00;  //iap的偏移全部去掉
     fseek(fin, 0, SEEK_END);
     size = ftell(fin);
+
+    //从bin文件读取md5值
+    fseek(fin, file_offset-512, SEEK_SET);   //读出md5,2023-06-12 增加一个偏移
+    bw = fread(md5_value, 1, 32, fin);
+    if(bw != 32)
+    {
+    	fclose(fin);
+    	printf("ERROR: read bin md5 failed ! ret = %d\n",bw);
+    	return NULL;
+    }
+    printf("read bin md5 success! md5_value = %s\n",md5_value);
+
+
+
     fseek(fin, file_offset, SEEK_SET);   //读取的位置也是不从0开始
     size -= (file_offset);  //去掉偏移的字节
     printf("file size = %d\r\n", size);

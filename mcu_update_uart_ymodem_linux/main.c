@@ -49,13 +49,13 @@ void send_update_cmd_tomcu(uint8_t phase)
 }
 
 #else
-
+//返回0表示正常，其他表示异常
 int  send_update_cmd_tomcu(uint8_t*data,uint8_t phase)
 {
 	uint8_t buf[] = {0xa5,0x5a,0x70,0,0,0,0,0x70};   //校验和不包括帧头
 	int ret;
 	int i = 0;
-	
+	int retry_times = 5;   //尝试5次
 
 	if(phase)
 	{
@@ -70,7 +70,7 @@ int  send_update_cmd_tomcu(uint8_t*data,uint8_t phase)
 			if(i == 0)
 			{
 				UART_SendPacket(buf, 8);   //4¸ö×Ö½Ú·¢³öÈ¥
-				usleep(100000);
+				usleep(200000);
 			}
 
 			ret = UART_ReceiveByte (data+i, 100);
@@ -96,10 +96,15 @@ int  send_update_cmd_tomcu(uint8_t*data,uint8_t phase)
 					break;
 				}
 			}
+			else
+				--retry_times;
 			//printf("i=%d\n",i);		
 			
 		}
-		while(1);
+		while(retry_times);
+
+		if( retry_times == 0)
+			return -1;
 	}
 
 	return 0;
